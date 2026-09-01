@@ -1,13 +1,28 @@
-"""더블클릭으로 실행되는 범용 파이썬 런처.
+"""더블클릭(또는 .py 파일 연결 프로그램)으로 실행되는 범용 파이썬 런처.
 
-PyRun.cmd 가 대상 .py 파일 경로를 argv[1] 로 넘겨서 이 스크립트를 실행한다.
-대상 스크립트는 절대 수정하지 않는다.
+대상 .py 파일 경로를 argv[1] 로 받아 실행한다. 대상 스크립트는 절대 수정하지 않는다.
+PyInstaller로 PyRun.exe 빌드해서 배포 (build_exe.bat 참고).
 """
 import os
 import re
 import shlex
 import subprocess
 import sys
+
+if sys.platform == "win32":
+    # exe로 직접 실행될 때(파일 연결 등)는 .cmd 래퍼의 chcp/PYTHONIOENCODING 설정이 없으므로
+    # 콘솔 코드페이지를 직접 UTF-8로 맞춰준다. 안 해주면 한글 출력이 시스템 로캘에 따라 깨짐.
+    import ctypes
+    try:
+        ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+        ctypes.windll.kernel32.SetConsoleCP(65001)
+    except Exception:
+        pass
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 # ponytail: import 이름과 pip 패키지 이름이 다른 흔한 경우만 커버. 새 사례 나오면 여기 추가.
 PIP_NAME_ALIASES = {
